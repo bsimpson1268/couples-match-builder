@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { programList } from './programList';
 import { programMeta } from './programMeta';
 import {
@@ -131,6 +131,8 @@ export default function CouplesMatchRankBuilder() {
       activationConstraint: { distance: 5 }
     })
   );    
+
+  const seededQuality = useRef(false);
 
 const handleDragEndPrograms = (event, user) => {
   const { active, over } = event;
@@ -772,17 +774,22 @@ return (
       >
         ← Back
       </button>
+
       <button
   onClick={() => {
-    // seed quality lists from the personal lists exactly once
-    setApplicant1QualityOrder(applicant1Programs);
-    setApplicant2QualityOrder(applicant2Programs);
+    // seed only once
+    if (!seededQuality.current) {
+      setApplicant1QualityOrder([...applicant1Programs]);
+      setApplicant2QualityOrder([...applicant2Programs]);
+      seededQuality.current = true;
+    }
     setCurrentStep(3);
   }}
   className="bg-blue-600 text-white px-4 py-2 rounded"
 >
   Next: Determine Program Quality →
 </button>
+
 
     </div>
   </div>
