@@ -215,14 +215,7 @@ const handleDragEndQuality = (event, user) => {
   setter(items => arrayMove(items, oldIndex, newIndex));
 };
 
-    // ── SYNC QUALITY ORDER TO PROGRAM LISTS ──
-    useEffect(() => {
-      if (currentStep === 3) {
-        // initialize quality orders from the personal lists, but only once
-        setApplicant1QualityOrder([...applicant1Programs]);
-        setApplicant2QualityOrder([...applicant2Programs]);
-      }
-    }, [currentStep]);  // watch only the step, not the program lists
+
   
 const totalWeight = Object.values(weights).reduce((sum, val) => sum + val, 0);
 const downloadCsv = () => {
@@ -780,11 +773,17 @@ return (
         ← Back
       </button>
       <button
-        onClick={() => setCurrentStep(3)}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
-      >
-        Next: Determine Program Quality →
-      </button>
+  onClick={() => {
+    // seed quality lists from the personal lists exactly once
+    setApplicant1QualityOrder(applicant1Programs);
+    setApplicant2QualityOrder(applicant2Programs);
+    setCurrentStep(3);
+  }}
+  className="bg-blue-600 text-white px-4 py-2 rounded"
+>
+  Next: Determine Program Quality →
+</button>
+
     </div>
   </div>
 )}
