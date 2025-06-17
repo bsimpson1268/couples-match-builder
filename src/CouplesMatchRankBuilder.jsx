@@ -121,6 +121,11 @@ export default function CouplesMatchRankBuilder() {
   const [applicant1ProgramSelect, setApplicant1ProgramSelect] = useState('');
   const [applicant2ProgramSelect, setApplicant2ProgramSelect] = useState('');
   const [proximityExponent, setProximityExponent] = useState(2);
+  const [weights, setWeights] = useState({ mutual: 30, proximity: 40, quality: 20, lifestyle: 10 });
+  const [pairingScores, setPairingScores] = useState([]);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [applicant1QualityOrder, setApplicant1QualityOrder] = useState([]);
+  const [applicant2QualityOrder, setApplicant2QualityOrder] = useState([]);
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 }
@@ -196,24 +201,29 @@ const proximityRows = proximityData
   })
   .sort((a, b) => b.proximityScore - a.proximityScore);
 
-  
+  // inside CouplesMatchRankBuilder, above the return
+const handleDragEndQuality = (event, user) => {
+  const { active, over } = event;
+  if (!over || active.id === over.id) return;
 
-  // ── NEW QUALITY ORDER STATES ──
-    const [applicant1QualityOrder, setApplicant1QualityOrder] = useState([]);
-    const [applicant2QualityOrder, setApplicant2QualityOrder] = useState([]);
-  
+  // pick the right list + setter
+  const list   = user === 1 ? applicant1QualityOrder : applicant2QualityOrder;
+  const setter = user === 1 ? setApplicant1QualityOrder  : setApplicant2QualityOrder;
+
+  const oldIndex = list.findIndex(item => item.id === active.id);
+  const newIndex = list.findIndex(item => item.id === over.id);
+  setter(items => arrayMove(items, oldIndex, newIndex));
+};
+
     // ── SYNC QUALITY ORDER TO PROGRAM LISTS ──
     useEffect(() => {
-      setApplicant1QualityOrder(applicant1Programs);
-    }, [applicant1Programs]);
-
-    useEffect(() => {
-      setApplicant2QualityOrder(applicant2Programs);
-    }, [applicant2Programs]);
-  const [weights, setWeights] = useState({ mutual: 30, proximity: 40, quality: 20, lifestyle: 10 });
-  const [pairingScores, setPairingScores] = useState([]);
-  const [currentStep, setCurrentStep] = useState(0);
-
+      if (currentStep === 3) {
+        // initialize quality orders from the personal lists, but only once
+        setApplicant1QualityOrder([...applicant1Programs]);
+        setApplicant2QualityOrder([...applicant2Programs]);
+      }
+    }, [currentStep]);  // watch only the step, not the program lists
+  
 const totalWeight = Object.values(weights).reduce((sum, val) => sum + val, 0);
 const downloadCsv = () => {
   const headers = [
@@ -795,7 +805,7 @@ return (
         <DndContext
   sensors={sensors}
   collisionDetection={closestCenter}
-  onDragEnd={evt => handleDragEndPrograms(evt, 1)}
+  onDragEnd={evt => handleDragEndQuality(evt, 1)}
 >
   <SortableContext
     items={applicant1QualityOrder.map(p => p.id)}
@@ -824,7 +834,7 @@ return (
         <DndContext
   sensors={sensors}
   collisionDetection={closestCenter}
-  onDragEnd={evt => handleDragEndPrograms(evt, 2)}
+  onDragEnd={evt => handleDragEndQuality(evt, 2)}
 >
   <SortableContext
     items={applicant2QualityOrder.map(p => p.id)}
